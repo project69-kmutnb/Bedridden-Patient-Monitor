@@ -1,95 +1,47 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vajira Patient Monitor Dashboard</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f4f7f9; margin: 0; padding: 0; color: #333; }
-        .header { background: #002D62; color: #FFFFFF; padding: 30px; border-bottom: 5px solid #FFD700; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .header h1 { margin: 0; font-size: 28px; }
-        .header p { margin: 5px 0 0; font-size: 16px; color: #FFD700; }
-        .status-box { font-size: 24px; margin: 25px; padding: 15px 40px; border-radius: 50px; display: inline-block; background: white; border: 3px solid #002D62; color: #002D62; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .timer-info { font-size: 18px; margin-bottom: 25px; background: #E7EDF3; padding: 10px; display: inline-block; border-radius: 10px; }
-        table { margin: 20px auto; border-collapse: collapse; width: 95%; max-width: 900px; background: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; }
-        th { background: #002D62; color: white; padding: 18px; text-transform: uppercase; letter-spacing: 1px; }
-        td { border-bottom: 1px solid #eee; padding: 15px; font-size: 18px; }
-        .active-row { background: #E3F2FD; font-weight: bold; color: #0056b3; }
-        .graph-container { margin: 40px auto; width: 95%; max-width: 1100px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        iframe { width: 100%; height: 650px; border: 0; border-radius: 10px; }
-        .footer { margin: 40px 0; padding: 20px; font-size: 14px; color: #666; background: #DDD; }
-    </style>
-</head>
-<body>
-
-    <div class="header">
-        <h1>🏥 ระบบติดตามผู้ป่วยติดเตียง (Vajira Patient Monitor)</h1>
-        <p>คณะแพทยศาสตร์วชิรพยาบาล | มหาวิทยาลัยนวมินทราธิราช</p>
-    </div>
-
-    <div id="st" class="status-box">กำลังเชื่อมต่อกับอุปกรณ์...</div>
-
-    <br>
-    <div class="timer-info">
-        🕒 <b>ระยะเวลานอนท่านี้:</b> <span id="dur">0m 0s</span> | 
-        <b style="color:#d9534f;">⏳ เวลาที่เหลือจนกว่าจะพลิกตัว:</b> <span id="rem">0m 0s</span>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>ตำแหน่งเซนเซอร์</th>
-                <th>น้ำหนัก (kg)</th>
-                <th>อุณหภูมิ (°C)</th>
-                <th>ความชื้น (%)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr id="tr0"><td>🔵 LEFT (ด้านซ้าย)</td><td id="k0">-</td><td id="t0">-</td><td id="h0">-</td></tr>
-            <tr id="tr1"><td>🔵 MIDDLE (จุดกลาง)</td><td id="k1">-</td><td id="t1">-</td><td id="h1">-</td></tr>
-            <tr id="tr2"><td>🔵 RIGHT (ด้านขวา)</td><td id="k2">-</td><td id="t2">-</td><td id="h2">-</td></tr>
-        </tbody>
-    </table>
-
-    <div class="graph-container">
-        <h3 style="color:#002D62; text-align:left; margin-left:10px;">📊 กราฟวิเคราะห์ข้อมูลแบบ Real-time (Looker Studio)</h3>
-        <iframe src="https://datastudio.google.com/embed/reporting/198574f8-24d7-4c40-92c2-5d744bc4c19d/page/p_9wxlr6942d" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
-    </div>
-
-    <div class="footer">
-        Dashboard พัฒนาเพื่อการวิจัยทางการแพทย์ | © 2026 Vajira Hospital
-    </div>
-
-    <script>
-        // เปลี่ยน IP ให้ตรงกับที่แสดงบนจอ LCD ของคุณ
-        const ESP32_IP = "192.168.1.154"; 
+<script>
+        // 1. นำ URL ที่ได้จากการ Deploy Google Apps Script (New Deployment) มาวางที่นี่
+        const SCRIPT_URL = "AKfycbxb004rpzK-OWNnzeDhvZtwBYZllYhR5Da1HbwqXgs2vm2KAadOZAAmpXvd3oS1I42_OA"; 
 
         async function updateData() {
             try {
-                const response = await fetch(`http://${ESP32_IP}/data`);
+                // 2. เปลี่ยนการเรียกข้อมูลจาก IP เครื่องมาเป็นเรียกจาก Google Script แทน
+                const response = await fetch(SCRIPT_URL);
                 if (!response.ok) throw new Error('Network response was not ok');
                 const d = await response.json();
 
+                // --- ส่วนการแสดงผล (เหมือนเดิม แต่ใช้ข้อมูลจาก d ที่ดึงมาล่าสุด) ---
                 document.getElementById('st').innerHTML = d.isWaiting ? '⚠️ น้ำหนักหาย!' : (d.isBed ? '✅ ระบบกำลังตรวจจับผู้ป่วย' : '❌ เตียงว่าง');
                 document.getElementById('st').style.borderColor = d.isBed ? '#002D62' : '#d9534f';
                 
-                document.getElementById('dur').innerHTML = Math.floor(d.dur/60) + 'm ' + (d.dur%60) + 's';
-                document.getElementById('rem').innerHTML = Math.floor(d.rem/60) + 'm ' + (d.rem%60) + 's';
+                // คำนวณเวลา (จัดการวินาทีที่ส่งมาจาก Sheet)
+                let durMin = Math.floor(d.dur / 60);
+                let durSec = d.dur % 60;
+                let remMin = Math.floor(d.rem / 60);
+                let remSec = d.rem % 60;
+
+                document.getElementById('dur').innerHTML = durMin + 'm ' + durSec + 's';
+                document.getElementById('rem').innerHTML = remMin + 'm ' + remSec + 's';
 
                 for(let i=0; i<3; i++){
-                    document.getElementById(`k${i}`).innerHTML = d.kg[i].toFixed(2);
-                    document.getElementById(`t${i}`).innerHTML = d.t[i].toFixed(1);
-                    document.getElementById(`h${i}`).innerHTML = d.h[i].toFixed(1);
-                    document.getElementById(`tr${i}`).className = d.kg[i] >= 1.0 ? 'active-row' : '';
+                    // ตรวจเช็คข้อมูลก่อนแสดงผล เผื่อกรณีข้อมูลใน Sheet เป็นค่าว่าง
+                    let kgVal = d.kg[i] ? parseFloat(d.kg[i]).toFixed(2) : "0.00";
+                    let tVal = d.t[i] ? parseFloat(d.t[i]).toFixed(1) : "0.0";
+                    let hVal = d.h[i] ? parseFloat(d.h[i]).toFixed(1) : "0.0";
+
+                    document.getElementById(`k${i}`).innerHTML = kgVal;
+                    document.getElementById(`t${i}`).innerHTML = tVal;
+                    document.getElementById(`h${i}`).innerHTML = hVal;
+                    
+                    // เปลี่ยนแถวเป็นสีฟ้าหากมีน้ำหนักกดทับเกิน 1kg
+                    document.getElementById(`tr${i}`).className = parseFloat(kgVal) >= 1.0 ? 'active-row' : '';
                 }
             } catch (err) {
-                document.getElementById('st').innerHTML = "❌ ไม่สามารถเชื่อมต่อกับเครื่อง ESP32 ได้";
+                document.getElementById('st').innerHTML = "❌ ไม่สามารถดึงข้อมูลจาก Cloud ได้";
                 console.error("Fetch error:", err);
             }
         }
 
-        setInterval(updateData, 2000);
-        updateData(); // เรียกทันทีเมื่อเปิดหน้าเว็บ
+        // ตั้งเวลาดึงข้อมูลทุก 10 วินาที (ให้สัมพันธ์กับที่ ESP32 ส่งเข้า Sheet)
+        setInterval(updateData, 10000); 
+        updateData(); 
     </script>
-</body>
-</html> 
