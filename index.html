@@ -77,12 +77,10 @@
                 
                 // คำนวณเวลา (จัดการวินาทีที่ส่งมาจาก Sheet)
                 let durMin = Math.floor(d.dur / 60);
-                let durSec = d.dur % 60;
                 let remMin = Math.floor(d.rem / 60);
-                let remSec = d.rem % 60;
 
-                document.getElementById('dur').innerHTML = durMin + 'm ' + durSec + 's';
-                document.getElementById('rem').innerHTML = remMin + 'm ' + remSec + 's';
+                document.getElementById('dur').innerHTML = durMin + 'm ' + ;
+                document.getElementById('rem').innerHTML = remMin + 'm ' + ;
 
                 for(let i=0; i<3; i++){
                     // ตรวจเช็คข้อมูลก่อนแสดงผล เผื่อกรณีข้อมูลใน Sheet เป็นค่าว่าง
