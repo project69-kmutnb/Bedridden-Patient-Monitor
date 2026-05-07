@@ -60,46 +60,50 @@
         Dashboard พัฒนาเพื่อการวิจัยทางการแพทย์ | © 2026 Vajira Hospital
     </div>
 
-<script>
-        // 1. นำ URL ที่ได้จากการ Deploy Google Apps Script (New Deployment) มาวางที่นี่
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQeDz6ObkWhB5pofqQ5D8l33tlvhh77zLOs4T_ysCcMdFXkOMQlQJljvpnKBE-UMm8vg/exec"; 
+async function updateData() {
+    try {
+        const response = await fetch(SCRIPT_URL);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const d = await response.json();
 
-        async function updateData() {
-            try {
-                // 2. เปลี่ยนการเรียกข้อมูลจาก IP เครื่องมาเป็นเรียกจาก Google Script แทน
-                const response = await fetch(SCRIPT_URL);
-                if (!response.ok) throw new Error('Network response was not ok');
-                const d = await response.json();
+        // --- จุดแก้ไขหลัก: เช็คสถานะจากบอร์ด ---
+        const isStandby = (d.status === "STANDBY");
 
-                // --- ส่วนการแสดงผล (เหมือนเดิม แต่ใช้ข้อมูลจาก d ที่ดึงมาล่าสุด) ---
-                document.getElementById('st').innerHTML = d.isWaiting ? '⚠️ น้ำหนักหาย!' : (d.isBed ? '✅ ระบบกำลังตรวจจับผู้ป่วย' : '❌ เตียงว่าง');
-                document.getElementById('st').style.borderColor = d.isBed ? '#002D62' : '#d9534f';
-                
-                // คำนวณเวลา (จัดการวินาทีที่ส่งมาจาก Sheet)
-                let durMin = Math.floor(d.dur / 60);
-                let remMin = Math.floor(d.rem / 60);
-
-                document.getElementById('dur').innerHTML = durMin + 'm ';
-                document.getElementById('rem').innerHTML = remMin + 'm ';
-
-                for(let i=0; i<3; i++){
-                    // ตรวจเช็คข้อมูลก่อนแสดงผล เผื่อกรณีข้อมูลใน Sheet เป็นค่าว่าง
-                    let kgVal = d.kg[i] ? parseFloat(d.kg[i]).toFixed(2) : "0.00";
-                    let tVal = d.t[i] ? parseFloat(d.t[i]).toFixed(1) : "0.0";
-                    let hVal = d.h[i] ? parseFloat(d.h[i]).toFixed(1) : "0.0";
-
-                    document.getElementById(`k${i}`).innerHTML = kgVal;
-                    document.getElementById(`t${i}`).innerHTML = tVal;
-                    document.getElementById(`h${i}`).innerHTML = hVal;
-                    
-                    // เปลี่ยนแถวเป็นสีฟ้าหากมีน้ำหนักกดทับเกิน 1kg
-                    document.getElementById(`tr${i}`).className = parseFloat(kgVal) >= 1.0 ? 'active-row' : '';
-                }
-            } catch (err) {
-                document.getElementById('st').innerHTML = "❌ ไม่สามารถดึงข้อมูลจาก Cloud ได้";
-                console.error("Fetch error:", err);
-            }
+        if (isStandby) {
+            // โหมด Standby (เตียงว่าง)
+            document.getElementById('st').innerHTML = '❌ เตียงว่าง';
+            document.getElementById('st').style.borderColor = '#d9534f'; // สีแดง
+            document.getElementById('st').style.color = '#d9534f';
+            document.getElementById('dur').innerHTML = '0m';
+            document.getElementById('rem').innerHTML = '120m';
+        } else {
+            // โหมดทำงาน (มีคนไข้นอนอยู่)
+            document.getElementById('st').innerHTML = '✅ มีคนไข้กำลังนอน';
+            document.getElementById('st').style.borderColor = '#002D62'; // สีน้ำเงิน
+            document.getElementById('st').style.color = '#002D62';
+            document.getElementById('dur').innerHTML = d.dur + 'm';
+            document.getElementById('rem').innerHTML = d.rem + 'm';
         }
+
+        // แสดงผลตารางเซนเซอร์
+        for(let i=0; i<3; i++){
+            // ในโหมด Standby ถ้าไม่มีน้ำหนักให้เป็น 0.00
+            let kgVal = d.kg[i] ? parseFloat(d.kg[i]).toFixed(2) : "0.00";
+            let tVal = d.t[i] ? parseFloat(d.t[i]).toFixed(1) : "0.0";
+            let hVal = d.h[i] ? parseFloat(d.h[i]).toFixed(1) : "0.0";
+
+            document.getElementById(`k${i}`).innerHTML = kgVal;
+            document.getElementById(`t${i}`).innerHTML = tVal;
+            document.getElementById(`h${i}`).innerHTML = hVal;
+            
+            // ไฮไลท์แถวที่มีน้ำหนักเกิน 1kg
+            document.getElementById(`tr${i}`).className = parseFloat(kgVal) >= 1.0 ? 'active-row' : '';
+        }
+    } catch (err) {
+        document.getElementById('st').innerHTML = "❌ ไม่สามารถเชื่อมต่อกับ Cloud ได้";
+        console.error("Fetch error:", err);
+    }
+}
 
         // ตั้งเวลาดึงข้อมูลทุก 10 วินาที (ให้สัมพันธ์กับที่ ESP32 ส่งเข้า Sheet)
         setInterval(updateData, 10000); 
