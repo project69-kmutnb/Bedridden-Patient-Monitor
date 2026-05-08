@@ -91,6 +91,10 @@
                 document.getElementById('st').innerText = (d.status === "STANDBY") ? "❌ เตียงว่าง" : "✅ มีคนไข้นอนอยู่";
                 document.getElementById('dur').innerText = Math.floor(d.dur / 60) + "m";
                 document.getElementById('rem').innerText = Math.max(0, Math.floor(d.rem / 60)) + "m";
+                // ✅ เพิ่มบรรทัดนี้เพื่อให้เมนูเลือกเวลาตรงกับค่าจริงบน Server
+  if (d.currentSleep) {
+      document.getElementById('sleepSelect').value = d.currentSleep;
+  }
                 
                 for(let i=0; i<3; i++) {
                     // ✅ แสดงทศนิยม 1 ตำแหน่ง
