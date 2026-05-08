@@ -10,7 +10,15 @@
         .header h1 { margin: 0; font-size: 28px; }
         .header p { margin: 5px 0 0; font-size: 16px; color: #FFD700; }
         .status-box { font-size: 24px; margin: 25px; padding: 15px 40px; border-radius: 50px; display: inline-block; background: white; border: 3px solid #002D62; color: #002D62; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .timer-info { font-size: 18px; margin-bottom: 25px; background: #E7EDF3; padding: 10px; display: inline-block; border-radius: 10px; }
+        .timer-info { font-size: 18px; margin-bottom: 10px; background: #E7EDF3; padding: 10px; display: inline-block; border-radius: 10px; }
+        
+        /* --- [ส่วนที่เพิ่มใหม่: สไตล์ของแผงตั้งค่า] --- */
+        .settings-panel { margin: 10px auto 25px; padding: 15px; width: 90%; max-width: 500px; background: white; border-radius: 15px; border: 1px dashed #002D62; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .settings-panel select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; outline: none; }
+        .settings-panel button { padding: 8px 20px; background: #002D62; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: 0.3s; margin-left: 5px; }
+        .settings-panel button:hover { background: #0056b3; }
+        .settings-panel label { font-weight: bold; color: #002D62; margin-right: 5px; }
+
         table { margin: 20px auto; border-collapse: collapse; width: 95%; max-width: 900px; background: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; }
         th { background: #002D62; color: white; padding: 18px; text-transform: uppercase; letter-spacing: 1px; }
         td { border-bottom: 1px solid #eee; padding: 15px; font-size: 18px; }
@@ -31,8 +39,21 @@
 
     <br>
     <div class="timer-info">
-        🕒 <b>ระยะเวลานอนท่านี้:</b> <span id="dur">0m 0s</span> | 
-        <b style="color:#d9534f;">⏳ เวลาที่เหลือจนกว่าจะพลิกตัว:</b> <span id="rem">0m 0s</span>
+        🕒 <b>ระยะเวลานอนท่านี้:</b> <span id="dur">0m</span> | 
+        <b style="color:#d9534f;">⏳ เวลาที่เหลือจนกว่าจะพลิกตัว:</b> <span id="rem">0m</span>
+    </div>
+
+    <div class="settings-panel">
+        <label>⚙️ ปรับช่วงเวลาส่งข้อมูล:</label>
+        <select id="sleepSelect">
+            <option value="60000">1 นาที</option>
+            <option value="120000">2 นาที</option>
+            <option value="300000" selected>5 นาที (ปกติ)</option>
+            <option value="600000">10 นาที</option>
+            <option value="1200000">20 นาที</option>
+            <option value="1800000">30 นาที</option>
+        </select>
+        <button onclick="saveSleepSetting()">บันทึกค่า</button>
     </div>
 
     <table>
@@ -61,9 +82,29 @@
     </div>
     
 <script>
-        // 🚩 [ใส่ลิงก์ของคุณที่นี่] 🚩
-        // นำ URL ที่ได้จากการ Deploy Google Apps Script (ที่ลงท้ายด้วย /exec) มาวางในเครื่องหมายคำพูดด้านล่างนี้
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfyEA3BAvkNWLG7L4x4Sj6nNZ9d148HDaC4tpPGg7Lm_hoiiSH7wjsPpDhdzx6cjX4aA/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJTv97ZJNnerx6Bp60rVIbmTPoonshQZqZys3RLWmWHq57yyqoLbBRyQ5kbsUjgndQOA/exec"; 
+
+        // --- [ส่วนที่เพิ่มใหม่: ฟังก์ชันบันทึกค่า Sleep] ---
+        async function saveSleepSetting() {
+            const timeVal = document.getElementById('sleepSelect').value;
+            const btn = document.querySelector('.settings-panel button');
+            
+            try {
+                btn.innerHTML = "⌛ กำลังบันทึก...";
+                btn.disabled = true;
+                
+                // ส่งค่าไปยัง App Script โดยพ่วง ?setSleep=xxxx
+                const res = await fetch(`${SCRIPT_URL}?setSleep=${timeVal}`);
+                if(res.ok) {
+                    alert("✅ บันทึกเวลาใหม่สำเร็จ! ระบบจะเปลี่ยนรอบการส่งข้อมูลในรอบถัดไป");
+                }
+            } catch (err) {
+                alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ");
+            } finally {
+                btn.innerHTML = "บันทึกค่า";
+                btn.disabled = false;
+            }
+        }
 
         async function updateData() {
             try {
@@ -71,30 +112,25 @@
                 if (!response.ok) throw new Error('Network response was not ok');
                 const d = await response.json();
 
-                // --- เช็คสถานะจากบอร์ด ---
                 const isStandby = (d.status === "STANDBY");
 
                 if (isStandby) {
-                    // โหมด Standby (เตียงว่าง)
                     document.getElementById('st').innerHTML = '❌ เตียงว่าง';
                     document.getElementById('st').style.borderColor = '#d9534f';
                     document.getElementById('st').style.color = '#d9534f';
                     document.getElementById('dur').innerHTML = '0m';
                     document.getElementById('rem').innerHTML = '120m';
                 } else {
-                    // โหมดทำงาน (มีคนไข้นอนอยู่)
                     document.getElementById('st').innerHTML = '✅ มีคนไข้กำลังนอน';
                     document.getElementById('st').style.borderColor = '#002D62';
                     document.getElementById('st').style.color = '#002D62';
                     
-                    // คำนวณนาที (บอร์ดส่งวินาทีมา)
                     let durM = Math.floor(d.dur / 60);
                     let remM = Math.floor(d.rem / 60);
                     document.getElementById('dur').innerHTML = durM + 'm';
                     document.getElementById('rem').innerHTML = (remM < 0 ? 0 : remM) + 'm';
                 }
 
-                // แสดงผลตารางเซนเซอร์
                 for(let i=0; i<3; i++){
                     let kgVal = d.kg[i] ? parseFloat(d.kg[i]).toFixed(2) : "0.00";
                     let tVal = d.t[i] ? parseFloat(d.t[i]).toFixed(1) : "0.0";
@@ -108,11 +144,9 @@
                 }
             } catch (err) {
                 document.getElementById('st').innerHTML = "❌ ไม่สามารถเชื่อมต่อกับ Cloud ได้";
-                console.error("Fetch error:", err);
             }
         }
 
-        // ตั้งเวลาดึงข้อมูลทุก 10 วินาที
         setInterval(updateData, 10000); 
         updateData(); 
     </script>
