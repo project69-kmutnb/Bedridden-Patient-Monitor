@@ -5,18 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vajira Patient Monitor Dashboard</title>
     <style>
+        /* สไตล์พื้นฐาน */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f4f7f9; margin: 0; padding: 0; color: #333; }
-        .header { background: #002D62; color: #FFFFFF; padding: 30px; border-bottom: 5px solid #FFD700; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .header h1 { margin: 0; font-size: 28px; }
+        
+        /* แก้ไขส่วน Header ให้รองรับรูปซ้าย-ขวา */
+        .header { 
+            background: #002D62; 
+            color: #FFFFFF; 
+            padding: 20px 30px; 
+            border-bottom: 5px solid #FFD700; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            display: flex;          /* ใช้ Flexbox */
+            align-items: center;    /* จัดกึ่งกลางแนวตั้ง */
+            justify-content: center; /* จัดกึ่งกลางแนวนอน */
+            gap: 30px;              /* ระยะห่างระหว่างรูปกับตัวอักษร */
+        }
+
+        .header-content { text-align: center; } /* จัดข้อความให้อยู่กึ่งกลางในตัวเอง */
+
+        .header-logo { 
+            height: 80px;  /* ปรับขนาดความสูงโลโก้ตามต้องการ */
+            width: auto; 
+        }
+
+        .header h1 { margin: 0; font-size: 26px; }
         .header p { margin: 5px 0 0; font-size: 16px; color: #FFD700; }
+
+        /* ส่วนประกอบอื่นๆ */
         .status-box { font-size: 24px; margin: 25px; padding: 15px 40px; border-radius: 50px; display: inline-block; background: white; border: 3px solid #002D62; color: #002D62; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .settings-panel { margin: 10px auto 25px; padding: 15px; width: 90%; max-width: 500px; background: white; border-radius: 15px; border: 1px dashed #002D62; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .settings-panel select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; outline: none; }
         .settings-panel button { padding: 8px 20px; background: #002D62; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: 0.3s; margin-left: 5px; }
+        
         table { margin: 20px auto; border-collapse: collapse; width: 95%; max-width: 900px; background: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; }
         th { background: #002D62; color: white; padding: 18px; text-transform: uppercase; letter-spacing: 1px; }
         td { border-bottom: 1px solid #eee; padding: 15px; font-size: 18px; }
         .active-row { background: #E3F2FD; font-weight: bold; color: #0056b3; }
+        
         .graph-container { margin: 40px auto; width: 95%; max-width: 1100px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         iframe { width: 100%; height: 650px; border: 0; border-radius: 10px; }
         .footer { margin: 40px 0; padding: 20px; font-size: 14px; color: #666; background: #DDD; }
@@ -25,14 +50,13 @@
 <body>
 
     <div class="header">
-        <img src="logo-left.png" class="header"> 
-        <h1>ระบบติดตามผู้ป่วยติดเตียง (Vajira Patient Monitor)</h1>
-        <img src="logo-right.png" class="header">
-        <p>คณะแพทยศาสตร์วชิรพยาบาล | มหาวิทยาลัยนวมินทราธิราช</p>
+        <img src="logo-left.png" class="header-logo" alt="Logo Left"> 
+        <div class="header-content">
+            <h1>ระบบติดตามผู้ป่วยติดเตียง (Vajira Patient Monitor)</h1>
+            <p>คณะแพทยศาสตร์วชิรพยาบาล | มหาวิทยาลัยนวมินทราธิราช</p>
+        </div>
+        <img src="logo-right.png" class="header-logo" alt="Logo Right">
     </div>
-
-    <img src="logo-right.png" class="header">
-</div>
 
     <div id="st" class="status-box">กำลังเชื่อมต่อ...</div>
 
@@ -96,13 +120,12 @@
                 document.getElementById('st').innerText = (d.status === "STANDBY") ? "❌ เตียงว่าง" : "✅ มีคนไข้นอนอยู่";
                 document.getElementById('dur').innerText = Math.floor(d.dur / 60) + "m";
                 document.getElementById('rem').innerText = Math.max(0, Math.floor(d.rem / 60)) + "m";
-                // ✅ เพิ่มบรรทัดนี้เพื่อให้เมนูเลือกเวลาตรงกับค่าจริงบน Server
-  if (d.currentSleep) {
-      document.getElementById('sleepSelect').value = d.currentSleep;
-  }
+                
+                if (d.currentSleep) {
+                    document.getElementById('sleepSelect').value = d.currentSleep;
+                }
                 
                 for(let i=0; i<3; i++) {
-                    // ✅ แสดงทศนิยม 1 ตำแหน่ง
                     document.getElementById(`k${i}`).innerText = parseFloat(d.kg[i] || 0).toFixed(1);
                     document.getElementById(`t${i}`).innerText = parseFloat(d.t[i] || 0).toFixed(1);
                     document.getElementById(`h${i}`).innerText = parseFloat(d.h[i] || 0).toFixed(1);
